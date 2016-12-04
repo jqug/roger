@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Roger</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="{{ url_for('static',filename='css/bootstrap.min.css') }}" type="text/css">
+
+    <!-- Custom Fonts -->
+    <link href="{{ url_for('static',filename='other-fonts/gooleaps.css') }}" rel='stylesheet' type='text/css'>
+    <link href="{{ url_for('static',filename='other-fonts/googleapis.css') }}" rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="{{ url_for('static',filename='font-awesome/css/font-awesome.min.css') }}" type="text/css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static',filename='css/creative.css') }}" type="text/css">
+
+    <style>
+        .key {
+            height: 50px;
+            width: 80px;
+            padding: 6px;
+            font-size: 30px;
+            -webkit-transition: background 100ms;
+            transition: background 100ms;
+            transition-timing-function: ease-out;
+            -webkit-box-shadow: 0px 1px 3px #aaa;
+            -moz-box-shadow: 0px 1px 3px #aaa;
+            box-shadow: 0px 1px 3px #aaa;
+            -moz-border-radius: 5px;
+            border-radius: 5px;
+            background: #fff;
+            background: -moz-linear-gradient(top, #ffffff 0%, #e5e5e5 100%);
+            background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #ffffff), color-stop(100%, #e5e5e5));
+            filter: progid: DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#e5e5e5', GradientType=0);
+            margin: 5px;
+        }
+
+        .word-key {
+            font-size: 18px;
+            padding-top: 14px
+        }
+
+        .selected {
+            -webkit-box-shadow: 0px 0px 3px 4px rgba(255, 10, 10, 1);
+            -moz-box-shadow: 0px 0px 3px 4px rgba(255, 10, 10, 1);
+            box-shadow: 0px 0px 3px 4px rgba(255, 10, 10, 1);
+            transition: all .7s ease-out -.1s;
+        }
+
+        .selected-context {
+            -webkit-box-shadow: 0px 0px 0px 4px rgba(0, 0, 0, .3);
+            -moz-box-shadow: 0px 0px 0px 4px rgba(0, 0, 0, .3);
+            box-shadow: 0px 0px 0px 4px rgba(0, 0, 0, .3);
+            transition: none;
+        }
+
+        .pressed {
+            color: #000;
+            background: #666;
+        }
+
+        #textarea {
+            margin: 30px 0;
+            font-family: Courier New, courier, typewriter;
+            font-size: 25px;
+            font-weight: bold;
+            height: 290px;
+        }
+
+        #text { opacity: 0}
+
+        #panel2 {
+            margin: 20px 0;
+            font-size: 15px
+        }
+
+        #panel2 .key {
+            font-size: 20px;
+            padding-top: 12px;
+            width: 170px;
+        }
+
+        #keyboardarea {
+            position: relative;
+            opacity: 0;
+        }
+
+        #keyboardarea p {
+            font-size: 20px;
+            text-align: center;
+            color: #fff;
+            text-shadow: 0 0 10px black;
+            position: relative;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        #resumemessage {
+            background-color: rgba(100, 100, 100, .9);
+            color: #fff;
+            position: absolute;
+            z-index: 1000;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            margin: -20px;
+            display: none;
+        }
+
+        .col-xs-6 {
+            width: auto;
+        }
+
+        .col-xs-12 {
+            width: auto;
+        }
+
+        .shift-key-active {
+          background: #aaf;
+        }
+
+        #loading {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          text-align: center;
+        }
+
+        #loading p {
+          font-size: 20px;
+        }
+
+    </style>
+</head>
+
+
+<body id="page-top" onclick="$('#resumemessage').hide(); update_suggestions(); dirty_bit_set=true; add_caret()">
+    <div class="container">
+        <div class="row">
+            <div id="textarea">
+                <textarea id="text" style="width: 100%; height: 100%"></textarea>
+                <div id="loading"><img src="{{ url_for('static',filename='img/loading.gif') }} "><br><p>Loading saved writing...</p></div>
+            </div>
+        </div>
+
+        <div id="keyboardarea" class="width: 100%; text-center">
+            <div id="resumemessage">
+                <p>Click here to resume
+                    <p>
+            </div>
+            <div style="display: inline-block;">
+                <div class="row">
+                    <div id="panel0" class="col-xs-6 text-center selected">
+                        <div class="row r0">
+                            <div class="col-xs-3 c0 key"></div>
+                            <div class="col-xs-3 c1 key"></div>
+                            <div class="col-xs-3 c2 key"></div>
+                            <div class="col-xs-3 c3 key"></div>
+                        </div>
+                        <div class="row r1">
+                            <div class="col-xs-3 c0 key"></div>
+                            <div class="col-xs-3 c1 key"></div>
+                            <div class="col-xs-3 c2 key"></div>
+                            <div class="col-xs-3 c3 key"></div>
+                        </div>
+                        <div class="row r2">
+                            <div class="col-xs-3 c0 key"></div>
+                            <div class="col-xs-3 c1 key"></div>
+                            <div class="col-xs-3 c2 key"></div>
+                            <div class="col-xs-3 c3 key"></div>
+                        </div>
+                        <div class="row r3">
+                            <div class="col-xs-3 c0 key"></div>
+                            <div class="col-xs-3 c1 key"></div>
+                            <div class="col-xs-3 c2 key"></div>
+                            <div class="col-xs-3 c3 key"></div>
+                        </div>
+                    </div>
+                    <div id="panel1" class="col-xs-6 text-center">
+                        <div class="row r0">
+                            <div class="col-xs-3 c0 key"></div>
+                            <div class="col-xs-3 c1 key"></div>
+                            <div class="col-xs-3 c2 key"></div>
+                            <div class="col-xs-3 c3 key"></div>
+                        </div>
+                        <div class="row r1">
+                            <div class="col-xs-3 c0 key"></div>
+                            <div class="col-xs-3 c1 key"></div>
+                            <div class="col-xs-3 c2 key"></div>
+                            <div class="col-xs-3 c3 key"></div>
+                        </div>
+                        <div class="row r2">
+                            <div class="col-xs-3 c0 key"></div>
+                            <div class="col-xs-3 c1 key"></div>
+                            <div class="col-xs-3 c2 key"></div>
+                            <div class="col-xs-3 c3 key"></div>
+                        </div>
+                        <div class="row r3">
+                            <div class="col-xs-3 c0 key"></div>
+                            <div class="col-xs-3 c1 key"></div>
+                            <div class="col-xs-3 c2 key"></div>
+                            <div class="col-xs-3 c3 key"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div id="panel2" class="col-xs-12 text-center" style="padding: 0">
+                        <div class="col-xs-3 c0 key"></div>
+                        <div class="col-xs-3 c1 key"></div>
+                        <div class="col-xs-3 c2 key"></div>
+                        <div class="col-xs-3 c3 key"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- jQuery -->
+    <script src="{{ url_for('static',filename='js/jquery.js') }} "></script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="{{ url_for('static',filename='js/bootstrap.min.js') }} "></script>
+
+    <!-- Plugin JavaScript -->
+    <script src="{{ url_for('static',filename='js/jquery.easing.min.js') }} "></script>
+    <script src="{{ url_for('static',filename='js/jquery.fittext.js') }} "></script>
+
+    <script>
+        var keys = [];
+        var suggestions = {
+            result: ['', '', '', '']
+        };
+        var ticktime = 1500;
+        var keyflashtime = 300;
+        var save_interval = 10;
+
+        var level = 0;
+        var index = [];
+        var seq = 0;
+        var prev_word = '';
+        var current_letters = '';
+        var last_save_time = new Date();
+        var dirty_bit_set = false; // whether there are changes to save
+        var initial_read_completed = false; // whether the text file has been read once
+        var shift_key_active = false;
+        var last_key_pressed = '';
+
+        var LAYOUT_LETTERS = 1;
+        var LAYOUT_SYMBOLS = 2;
+        var current_layout = LAYOUT_LETTERS;
+
+        $SCRIPT_ROOT = {{ request.script_root | tojson | safe }};
+
+        function remove_caret() {
+            l = $('#text').val().length;
+            if (l > 0 && $('#text').val()[l - 1] == '▮') {
+                $('#text').val($('#text').val().substring(0, l - 1));
+            }
+        }
+
+        function add_caret() {
+            l = $('#text').val().length;
+            if (l == 0 || $('#text').val()[l - 1] != '▮') {
+                $('#text').val($('#text').val() + '▮');
+            }
+            $('#text').scrollTop($('#text')[0].scrollHeight);
+        }
+
+        add_caret();
+
+        // Read in the keyboard layout from file
+        function read_keyboard_layout() {
+          $('.word-key').removeClass('word-key');
+          $('.shift-key').removeClass('shift-key');
+          $('.shift-key-active').removeClass('shift-key-active');
+
+          if (current_layout==LAYOUT_LETTERS) {
+            url = "{{ url_for('static',filename='keys-frequent.json') }}"
+          }
+          else if (current_layout==LAYOUT_SYMBOLS) {
+            url = "{{ url_for('static',filename='keys-symbols.json') }}"
+          }
+          $.getJSON(url, function(data) {
+              keys = data;
+              for (row = 0; row < 4; row++) {
+                  for (col = 0; col < 8; col++) {
+                      label = keys[row][col]
+                      isWordKey = false;
+                      isShiftKey = false;
+                      if (label.length > 1) {
+                          isWordKey = true;
+                      }
+                      if (label === 'enter') {
+                          label = '&#8629;';
+                          isWordKey = false
+                      }
+                      if (label === 'delete') {
+                          label = '&#8656;';
+                          isWordKey = false
+                      }
+                      if (label === 'shift') {
+                          label = '&#11014;';
+                          isWordKey = false
+                          isShiftKey = true;
+                      }
+                      if (label === 'symbols') {
+                          label = '?123';
+                      }
+                      if (label === 'letters') {
+                          label = 'ABC';
+                      }
+                      if (col < 4) {
+                          selection = '#panel0 .r' + row + ' .c' + col
+                          if (isWordKey || shift_key_active) {
+                            $(selection).html(label.toUpperCase());
+                          }
+                          else {
+                            $(selection).html(label.toLowerCase());
+                          }
+
+                          if (isWordKey) {
+                              $(selection).addClass('word-key')
+                          }
+                          if (isShiftKey) {
+                              $(selection).addClass('shift-key');
+                              if (shift_key_active) {
+                                $(selection).addClass('shift-key-active');
+                              }
+                          }
+                      } else {
+                          selection = '#panel1 .r' + row + ' .c' + (col - 4);
+                          if (isWordKey || shift_key_active) {
+                            $(selection).html(label.toUpperCase());
+                          }
+                          else {
+                            $(selection).html(label.toLowerCase());
+                          }
+
+                          if (isWordKey) {
+                              $(selection).addClass('word-key')
+                          }
+                          if (isShiftKey) {
+                              $(selection).addClass('shift-key');
+                              if (shift_key_active) {
+                                $(selection).addClass('shift-key-active');
+                              }
+                          }
+
+                          /*$(selection).html(label.toUpperCase());
+                          if (isWordKey) {
+                              $(selection).addClass('word-key')
+                          }
+                          if (isShiftKey) {
+                              $(selection).addClass('shift-key')
+                          }*/
+                      }
+                  }
+              }
+          });
+        }
+
+        function update_suggestions() {
+          if (current_layout==LAYOUT_LETTERS) {
+            // Calculate the previous word and current letters
+            current_letters = ''
+            prev_word = ''
+
+            txt = $('#text').val()
+            if (txt.length > 50) {
+                txt = txt.substring(txt.length - 50, txt.length);
+            }
+            l = txt.length;
+            if (l > 0) {
+                words = txt.split(/[\s,]+/);
+                if (words.length > 0) current_letters = words[words.length - 1]
+                if (words.length > 1) prev_word = words[words.length - 2]
+                    // Check a sentence didn't just end
+                if (prev_word.includes('.') || prev_word.includes('?') || prev_word.includes('!')) {
+                    prev_word = '';
+                }
+                //current_letters = current_letters.toLowerCase();
+                //prev_word = prev_word.toLowerCase();
+            }
+
+            console.log('current_letters = ' + current_letters);
+            console.log('prev_word = ' + prev_word);
+            console.log('last_key_pressed = ' + last_key_pressed);
+
+            if (prev_word=='' && current_letters=='') {
+              if (!shift_key_active && last_key_pressed != 'shift'){
+                shift_key_active = true;
+                read_keyboard_layout();
+              }
+            }
+
+            $.getJSON($SCRIPT_ROOT + '/_suggest', {
+                prev_word: prev_word.toLowerCase(),
+                current_letters: current_letters.toLowerCase(),
+                n_suggestions: 4
+            }, function(data) {
+                if (typeof data != "undefined") {
+                    suggestions = data;
+
+                    // Capitalise if necessary
+                    if (shift_key_active || (current_letters.length>0 && current_letters[0]==current_letters[0].toUpperCase())) {
+                      for (i = 0; i < suggestions['result'].length; i++) {
+                        suggestion = suggestions['result'][i];
+                        l = suggestion.length;
+                        if (l>1) {
+                          suggestions['result'][i] = suggestion[0].toUpperCase() + suggestion.substring(1,l)
+                        }
+                        else if (l==1) {
+                          suggestions['result'][i] = suggestion[0].toUpperCase()
+                        }
+                      }
+                    }
+
+                    for (col = 0; col < 4; col++) {
+                        label = suggestions['result'][col];
+                        selection = '#panel2 .c' + col
+                        $(selection).html(label);
+                    }
+                }
+            });
+          } else {   // don't show suggestions when entering symbols/numbers
+            for (col = 0; col < 4; col++) {;
+                selection = '#panel2 .c' + col
+                $(selection).html('');
+            }
+            suggestions = {
+                result: ['', '', '', '']
+            };
+          }
+        };
+
+        function initialise_text() {
+            $.getJSON($SCRIPT_ROOT + '/_readfile', {
+                text: $('#text').val()
+            }, function(data) {
+                if (typeof data != "undefined") {
+                    $('#text').val(data['result']);
+                    update_suggestions();
+                    add_caret();
+                    initial_read_completed = true;
+                    $('#loading').hide();
+                    $('#text').fadeTo(1000,1)
+                    $('#keyboardarea').fadeTo(1000,1)
+                };
+            });
+        }
+
+        function save_to_file() {
+            l = $('#text').val().length;
+            if ((l > 0) && initial_read_completed) {
+                textarea_contents = $('#text').val().substring(0, l - 1);
+                $.getJSON($SCRIPT_ROOT + '/_savefile', {
+                    text: textarea_contents
+                }, function(data) {
+                    if ((typeof data != "undefined") && (data['result'] == 'OK')) {
+                        console.log('Saved file OK');
+                    } else {
+                        console.log('Problem saving file');
+                    };
+                });
+            }
+        }
+
+        function step() {
+            // Check whether it's time to save file
+            if (dirty_bit_set) {
+                current_time = new Date();
+                elapsed = (current_time.getTime() - last_save_time.getTime()) / 1000;
+                if (elapsed > save_interval) {
+                    save_to_file();
+                    last_save_time = new Date;
+                }
+                dirty_bit_set = false;
+            }
+
+            // Only step if we're not editing the text directly
+            if (!$('#resumemessage').is(":visible")) {
+
+                if (level == 0) {
+                    seq = seq + 1;
+                    if (seq > 2) {
+                        seq = 0;
+                    }
+                    // If there are no suggested words, skip the lower panel
+                    if (seq == 2 && suggestions['result'][0].length == 0) {
+                        seq = 0;
+                    }
+
+                    if (seq == 0) {
+                        $('.selected').removeClass('selected');
+                        $('#panel0').addClass('selected');
+                    } else if (seq == 1) {
+                        $('.selected').removeClass('selected');
+                        $('#panel1').addClass('selected');
+                    } else if (seq == 2) {
+                        $('.selected').removeClass('selected');
+                        $('#panel2').addClass('selected');
+                    }
+                }
+
+                if (level == 1) {
+                    seq = seq + 1;
+                    if (seq < 4) {
+                        $('.selected').removeClass('selected');
+                        if (index[0] == 0) {
+                            $('#panel0 .r' + seq).addClass('selected');
+                        } else if (index[0] == 1) {
+                            $('#panel1 .r' + seq).addClass('selected');
+                        } else if (index[0] == 2) {
+                            $('#panel2 .c' + seq).addClass('selected');
+                        }
+                    } else {
+                        seq = 2;
+                        level = 0;
+                        index = []
+                        $('.selected-context').removeClass('selected-context');
+                        step();
+                    }
+                }
+
+                if (level == 2) {
+                    seq = seq + 1;
+                    if (seq < 4) {
+                        $('.selected').removeClass('selected');
+
+                        if (index[0] == 0) {
+                            $('#panel0 .r' + index[1] + ' .c' + seq).addClass('selected');
+                        } else if (index[0] == 1) {
+                            $('#panel1 .r' + index[1] + ' .c' + seq).addClass('selected');
+                        }
+                    } else {
+                        seq = 2;
+                        level = 0;
+                        index = []
+                        $('.selected-context').removeClass('selected-context');
+                        step();
+                    }
+                }
+            }
+        }
+
+        function keydown(e) {
+            kc = e.keyCode;
+            // Check that the text area is not in focus (if so, then keys
+            // behave normally for editing text)
+            // must be arrow key, pgup, pgdown, space
+            if (!$('#text').is(':focus') && (kc > 31 && kc < 41)) {
+                remove_caret()
+
+                clearInterval(timer);
+
+                $('.selected-context').removeClass('selected-context');
+
+                if ((level == 0) || (level == 1) && (index[0] < 2)) {
+                    // The key press has selected one level deeper
+                    $('.selected').addClass('selected-context');
+                    index.push(seq);
+                    level = level + 1;
+                    seq = -1;
+                    timer = window.setInterval(step, ticktime);
+                    step();
+
+                } else {
+                    // The key press has selected an individual key
+                    $('.selected').removeClass('selected');
+
+                    if (index[0] == 2) {
+                        // The key press has selected a suggested word
+
+                        if (suggestions['result'][seq].length > 0) {
+                            // If a word suggestion has been selected, then remove the initial
+                            // characters before adding the full word.
+                            l = $('#text').val().length;
+                            if (l > 0) {
+                                $('#text').val($('#text').val().substring(0, l - current_letters.length));
+                            }
+
+                            // Add the suggested word
+                            $('#text').val($('#text').val() + suggestions['result'][seq] + ' ');
+
+                            $('#panel' + index[0] + ' .c' + seq).addClass('pressed');
+
+                            if (shift_key_active) {
+                              shift_key_active = false;
+                              read_keyboard_layout();
+                            }
+
+                            last_key_pressed = suggestions['result'][seq];
+                        }
+                    } else {
+                        // Key from main component
+                        $('#panel' + index[0] + ' .r' + index[1] + ' .c' + seq).addClass('pressed');
+
+                        col = seq;
+                        if (index[0] == 1) {
+                            col += 4
+                        };
+                        char = keys[index[1]][col];
+
+                        if (char == 'delete') {
+                            l = $('#text').val().length;
+                            if (l > 0) {
+                                $('#text').val($('#text').val().substring(0, l - 1));
+                            }
+                        } else if (char == 'symbols') {
+                              current_layout = LAYOUT_SYMBOLS;
+                              read_keyboard_layout();
+                        } else if (char == 'letters') {
+                              current_layout = LAYOUT_LETTERS;
+                              read_keyboard_layout();
+                        } else if (char =='shift') {
+                              shift_key_active = !shift_key_active;
+                              read_keyboard_layout();
+                        } else {
+                            if (char == 'space') {
+                                char = ' ';
+                            };
+                            if (char == 'enter') {
+                                char = '\n';
+                            };
+                            if (shift_key_active) {
+                              char = char.toUpperCase()
+                            }
+                            // Remove single space before punctuation
+                            if (/[.,;:?!]/.test(char)) {
+                                l = $('#text').val().length;
+                                if (l > 0) {
+                                    if ($('#text').val()[l - 1] == ' ') {
+                                        $('#text').val($('#text').val().substring(0, l - 1));
+                                    }
+                                }
+                                char = char + ' ';
+                            }
+                            $('#text').val($('#text').val() + char);
+                        }
+
+                        last_key_pressed = char;
+
+                        if (char != 'shift') {
+                          shift_key_active = false;
+                          read_keyboard_layout()
+                        }
+                    }
+
+                    update_suggestions();
+
+                    level = 0;
+                    seq = -1;
+                    index = [];
+                    timer = window.setInterval(step, ticktime + keyflashtime);
+                    setTimeout(function() {
+                        $('.pressed').removeClass('pressed');
+                        step();
+                    }, keyflashtime);
+
+                    dirty_bit_set = true;
+                }
+                add_caret();
+            }
+        }
+
+        $('#text').click(function(event) {
+            event.stopPropagation();
+            $('#resumemessage').show()
+            remove_caret();
+            return false;
+        });
+
+        var timer = window.setInterval(step, ticktime);
+        $('#page-top').bind('keydown', keydown);
+        read_keyboard_layout();
+        initialise_text();
+    </script>
+
+</body>
+</html>
